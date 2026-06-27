@@ -1,0 +1,30 @@
+# AI
+.claude
+.pi
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Go / build output
+/bin/
+/dist/
+/lafourche
+
+# Env files with credentials
+.env
+.env.*
+!.env.example
+
+# Local session / secrets
+lafourche-session.json
+
+# OS
+.DS_Store

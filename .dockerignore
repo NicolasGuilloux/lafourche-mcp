@@ -1,0 +1,23 @@
+# VCS / tooling
+.git
+.gitignore
+.claude
+.pi
+.envrc
+.direnv
+.devenv*
+
+# Secrets / local runtime junk
+.env
+*.env
+!.env.example
+
+# Build output
+bin/
+dist/
+lafourche
+
+# Docs and editor cruft
+docs/
+*.md
+.DS_Store

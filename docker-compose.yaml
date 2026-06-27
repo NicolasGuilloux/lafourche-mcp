@@ -1,0 +1,42 @@
+# La Fourche MCP server.
+#
+# A single static Go binary. Authentication is a headless Firebase email/password
+# login — no browser at runtime.
+#
+#   docker compose up --build                            # MCP server on :8080
+#   docker compose run --rm lafourche search "lait d'amande"
+#   docker compose run --rm lafourche orders
+#
+# Configuration comes from .env (see .env.example). To use authenticated
+# commands (orders, basket, info), provide either:
+#   LAFOURCHE_EMAIL / LAFOURCHE_PASSWORD   — auto-login on container start, or
+#   LAFOURCHE_CONFIG_DIR                    — reuse a host session (`lafourche login`)
+
+services:
+  lafourche:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: lafourche-mcp:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MCP_ADDR: ":8080"
+    ports:
+      - "8080:8080"            # MCP Streamable HTTP
+    volumes:
+      # Holds the auth tokens (Firebase) and the account cart id.
+      #
+      # Default (LAFOURCHE_CONFIG_DIR unset): a self-contained named volume.
+      # Provide LAFOURCHE_EMAIL / LAFOURCHE_PASSWORD in .env so the container
+      # logs in on its own.
+      #
+      # Alternatively, reuse a host session: point LAFOURCHE_CONFIG_DIR at the
+      # host config dir that already ran `lafourche login`, e.g. in .env:
+      #   macOS: LAFOURCHE_CONFIG_DIR=$HOME/Library/Application Support/lafourche
+      #   Linux: LAFOURCHE_CONFIG_DIR=$HOME/.config/lafourche
+      - ${LAFOURCHE_CONFIG_DIR:-lafourche-config}:/data/lafourche
+
+volumes:
+  lafourche-config:
