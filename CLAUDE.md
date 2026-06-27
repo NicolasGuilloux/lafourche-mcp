@@ -41,8 +41,8 @@ Or via devenv scripts (from the repo root): `build`, `test`, `lint`, `fmt`,
 
 La Fourche has two back-ends; the tool uses each for what it does best:
 
-- **Search** → Shopify Storefront API of `shop.lafourche.fr` (public token). It
-  returns the product **SKU**, which is the key used by the basket.
+- **Search** → the site's **Algolia** index (`production_products`). Same results
+  as lafourche.fr, member prices, and the product **SKU** used by the basket.
 - **Auth, account, basket, orders** → the member back-end
   (`api.lafourche.fr` GraphQL + **Firebase/Firestore**):
   - **Login** is a headless **Firebase email/password** sign-in
@@ -68,7 +68,7 @@ src/internal/lafourche/   back-end client
   membercart.go  account basket (Firestore + createCart enrichment)
   firestore.go   Firestore REST access (cart)
   info.go        account info (token claims)
-  search.go      product search (Shopify Storefront)
+  search.go      product search (Algolia, index production_products)
 ```
 
 ## Adding a command / MCP tool

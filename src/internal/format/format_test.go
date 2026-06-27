@@ -8,16 +8,19 @@ import (
 )
 
 func TestProductsMarkdown(t *testing.T) {
-	out := ProductsMarkdown([]lafourche.Product{{
-		Title:  "Miel d'Acacia Bio",
-		Vendor: "La Fourche",
-		URL:    "https://shop.lafourche.fr/products/miel",
-		Variants: []lafourche.Variant{{
-			VariantID: "gid://shopify/ProductVariant/123",
-			Price:     "9.98", CompareAt: "12.62", Currency: "EUR", Available: true,
+	out := ProductsMarkdown(&lafourche.SearchResult{
+		Page: 1, Pages: 17, Total: 840,
+		Products: []lafourche.Product{{
+			Title:  "Miel d'Acacia Bio",
+			Vendor: "La Fourche",
+			URL:    "https://lafourche.fr/products/miel",
+			Variants: []lafourche.Variant{{
+				SKU:   "1-ABC-123",
+				Price: "9.98", CompareAt: "12.62", Currency: "EUR", Available: true,
+			}},
 		}},
-	}})
-	for _, want := range []string{"Miel d'Acacia Bio", "9.98 EUR", "au lieu de 12.62", "en stock", "gid://shopify/ProductVariant/123"} {
+	})
+	for _, want := range []string{"Miel d'Acacia Bio", "9.98 EUR", "au lieu de 12.62", "en stock", "1-ABC-123", "page 1/17", "page=2"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("sortie manque %q:\n%s", want, out)
 		}

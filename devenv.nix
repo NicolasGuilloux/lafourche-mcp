@@ -18,9 +18,6 @@
   };
 
   env = {
-    # Valeurs par défaut surchargeables (cf. internal/lafourche/config.go)
-    LAFOURCHE_SHOP_DOMAIN = lib.mkDefault "shop.lafourche.fr";
-    LAFOURCHE_API_VERSION = lib.mkDefault "2024-10";
     CGO_ENABLED = "0";
   };
 

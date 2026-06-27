@@ -1,46 +1,32 @@
 # Investigation — APIs de La Fourche
 
 > Notes de rétro-ingénierie des endpoints utilisés par `lafourche-mcp`.
-> La boutique https://shop.lafourche.fr est **propulsée par Shopify**
-> (`la-fourche.myshopify.com`, shop id `995655740`).
+> Le front lafourche.fr (Next.js) s'appuie sur un back-end membre
+> (`api.lafourche.fr` + Firebase/Firestore) et sur Algolia pour la recherche.
 
-## 1. Recherche produits & panier — Storefront API (✅ fonctionnel)
+## 1. Recherche produits — Algolia (✅ fonctionnel)
 
-API GraphQL Storefront, **non authentifiée** :
-
-```
-POST https://shop.lafourche.fr/api/2024-10/graphql.json
-Header: X-Shopify-Storefront-Access-Token: 23efc1617fa111fad36f7baab56a7725
-```
-
-- Le token public est extrait du bootstrap de la home (`accessToken":"…"`).
-  Surcharge possible via `LAFOURCHE_STOREFRONT_TOKEN`.
-- Scopes accordés : `unauthenticated_read_product_listings`,
-  `unauthenticated_read_checkouts`, `unauthenticated_write_checkouts`…
-- ⚠️ Scopes **refusés** : `unauthenticated_read_product_inventory`
-  (→ pas de `quantityAvailable`) et `unauthenticated_write_customers`
-  (→ pas de `customerAccessTokenCreate`, cf. §3).
-
-Opérations implémentées :
-- `products(query:…)` → recherche
-- `cartCreate` / `cartLinesAdd` / `cart(id:)` → panier (token de panier persisté
-  localement dans la session).
-
-## 2. Recherche rapide — Ajax predictive search (alternative)
+Le site utilise **Algolia** (config extraite du `__NEXT_DATA__.runtimeConfig`,
+clé « search-only » publique) :
 
 ```
-GET https://shop.lafourche.fr/search/suggest.json?q=miel&resources[type]=product
+POST https://SPM5J6SZTM-dsn.algolia.net/1/indexes/production_products/query
+Headers: X-Algolia-Application-Id: SPM5J6SZTM
+         X-Algolia-API-Key: ca66381c136c56785ec5fb8e95a70ad7
+Body:    {"params":"query=p%C3%A2te&hitsPerPage=20"}
 ```
 
-Renvoie un JSON de suggestions. Pratique mais moins riche que la Storefront API ;
-non utilisé pour l'instant.
+- App `SPM5J6SZTM`, index produits `production_products` (mêmes résultats que
+  lafourche.fr, **prix membres**). « pâte » → ~840 hits.
+- Chaque hit porte le **`sku`** (ex. `6-LAZ-102`) — directement utilisable par le
+  panier — ainsi que `title`, `vendor`, `price`, `compare_at_price`, `handle`,
+  `image`, `inventory_available`, `barcode`, `product_type`, catégories…
+- Surcharge via `LAFOURCHE_ALGOLIA_APP_ID` / `_API_KEY` / `_INDEX`.
 
-## 3. Connexion & commandes — backend membre lafourche.fr (✅ fonctionnel)
+## 2. Connexion & commandes — backend membre lafourche.fr (✅ fonctionnel)
 
-⚠️ Le **compte membre** n'est PAS sur le Shopify `shop.lafourche.fr`, mais sur le
-site `lafourche.fr` (app **Next.js**) adossé à un backend GraphQL maison
-« lego ». La piste « New Customer Account API Shopify » explorée au départ était
-une fausse piste (ce login Shopify n'est pas celui des membres).
+Le **compte membre** est sur `lafourche.fr` (app **Next.js**) adossé à un backend
+GraphQL (`api.lafourche.fr`) et à **Firebase/Firestore**.
 
 ```
 Login (UI)   : https://lafourche.fr/account/login   (email/mdp, Google, FB, Apple)
@@ -104,10 +90,10 @@ appBaseUrl = https://lafourche.fr
 authProviders = [email, google, facebook, apple]
 ```
 
-## 4. Panier — Firestore (panier du compte, synchronisé mobile/web)
+## 3. Panier — Firestore (panier du compte, synchronisé mobile/web)
 
-Le panier de La Fourche **n'est pas** le panier Shopify ni un panier anonyme : il
-est stocké dans **Firestore** et lié au compte (même panier sur le site et l'appli).
+Le panier de La Fourche est stocké dans **Firestore** et lié au compte : c'est le
+même panier sur le site et l'appli mobile.
 
 ```
 Projet Firestore : production-la-fourche
@@ -134,9 +120,9 @@ l'affichage (la vérité reste le doc Firestore).
 
 | Variable | Défaut | Rôle |
 |---|---|---|
-| `LAFOURCHE_SHOP_DOMAIN` | `shop.lafourche.fr` | Domaine boutique |
-| `LAFOURCHE_API_VERSION` | `2024-10` | Version API Shopify |
-| `LAFOURCHE_STOREFRONT_TOKEN` | (token public) | Token Storefront |
+| `LAFOURCHE_ALGOLIA_APP_ID` | `SPM5J6SZTM` | App Algolia (recherche) |
+| `LAFOURCHE_ALGOLIA_API_KEY` | (clé search-only) | Clé Algolia |
+| `LAFOURCHE_ALGOLIA_INDEX` | `production_products` | Index produits |
 | `LAFOURCHE_SESSION_PATH` | `$XDG_CONFIG_HOME/lafourche/session.json` | État local (panier + jetons) |
 | `LAFOURCHE_MEMBER_API_URL` | `https://api.lafourche.fr/graphql` | API membre (commandes) |
 | `LAFOURCHE_LF_CHANNEL` | `default:fr_FR` | En-tête `lf-channel` |

@@ -20,7 +20,7 @@ func New(client *lafourche.Client) *server.MCPServer {
 		"lafourche-mcp",
 		Version,
 		server.WithToolCapabilities(true),
-		server.WithInstructions("Outils pour piloter La Fourche (épicerie bio Shopify): recherche produits, panier, commandes."),
+		server.WithInstructions("Outils pour piloter La Fourche (épicerie bio): recherche produits, panier du compte, commandes."),
 	)
 	registerTools(s, client)
 	return s
@@ -40,20 +40,21 @@ func ServeHTTP(s *server.MCPServer, addr string) error {
 func registerTools(s *server.MCPServer, client *lafourche.Client) {
 	s.AddTool(
 		mcp.NewTool("search_products",
-			mcp.WithDescription("Recherche des produits sur La Fourche par mots-clés."),
+			mcp.WithDescription("Recherche des produits sur La Fourche par mots-clés (50 par page)."),
 			mcp.WithString("query", mcp.Required(), mcp.Description("Termes de recherche, ex: 'miel acacia'.")),
-			mcp.WithNumber("limit", mcp.Description("Nombre max de résultats (défaut 10).")),
+			mcp.WithNumber("page", mcp.Description("Numéro de page, 1-indexée (défaut 1).")),
+			mcp.WithNumber("size", mcp.Description("Produits par page (défaut 50).")),
 		),
 		func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			query := req.GetString("query", "")
 			if query == "" {
 				return mcp.NewToolResultError("le paramètre 'query' est requis"), nil
 			}
-			products, err := client.SearchProducts(ctx, query, req.GetInt("limit", 10))
+			res, err := client.SearchProducts(ctx, query, req.GetInt("page", 1), req.GetInt("size", 0))
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
-			return mcp.NewToolResultText(format.ProductsMarkdown(products)), nil
+			return mcp.NewToolResultText(format.ProductsMarkdown(res)), nil
 		},
 	)
 

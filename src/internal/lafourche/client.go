@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Client est le point d'entrée vers les APIs de La Fourche (Shopify).
+// Client est le point d'entrée vers les APIs de La Fourche.
 type Client struct {
 	cfg     Config
 	http    *http.Client
@@ -33,12 +33,7 @@ func New(cfg Config) (*Client, error) {
 // Session expose l'état local (panier, jetons).
 func (c *Client) Session() *Session { return c.session }
 
-// storefrontEndpoint renvoie l'URL GraphQL Storefront.
-func (c *Client) storefrontEndpoint() string {
-	return fmt.Sprintf("https://%s/api/%s/graphql.json", c.cfg.ShopDomain, c.cfg.APIVersion)
-}
-
-// graphQLError porte les erreurs renvoyées par l'API GraphQL Shopify.
+// graphQLError porte les erreurs renvoyées par l'API GraphQL membre.
 type graphQLError struct {
 	Message    string `json:"message"`
 	Extensions struct {
@@ -52,14 +47,6 @@ func (e graphQLError) Error() string {
 		return fmt.Sprintf("%s (%s)", e.Message, e.Extensions.Code)
 	}
 	return e.Message
-}
-
-// storefront exécute une requête GraphQL sur l'API Storefront et désérialise
-// le champ "data" dans out.
-func (c *Client) storefront(ctx context.Context, query string, vars map[string]any, out any) error {
-	return c.graphql(ctx, c.storefrontEndpoint(), map[string]string{
-		"X-Shopify-Storefront-Access-Token": c.cfg.StorefrontToken,
-	}, query, vars, out)
 }
 
 // graphql est le helper bas niveau partagé (envoie {query, variables}).

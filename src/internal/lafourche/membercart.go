@@ -94,6 +94,9 @@ func (c *Client) fetchCartItems(ctx context.Context, scid string) (map[string]in
 
 // GetBasket renvoie le panier du compte (enrichi noms/prix membres).
 func (c *Client) GetBasket(ctx context.Context) (*Basket, error) {
+	if err := c.ensureToken(ctx); err != nil {
+		return nil, err
+	}
 	scid, err := c.shoppingCartID(ctx)
 	if err != nil {
 		return nil, err
@@ -109,6 +112,9 @@ func (c *Client) GetBasket(ctx context.Context) (*Basket, error) {
 func (c *Client) BasketAdd(ctx context.Context, sku string, quantity int) (*Basket, error) {
 	if quantity <= 0 {
 		quantity = 1
+	}
+	if err := c.ensureToken(ctx); err != nil {
+		return nil, err
 	}
 	scid, err := c.shoppingCartID(ctx)
 	if err != nil {
@@ -126,6 +132,9 @@ func (c *Client) BasketAdd(ctx context.Context, sku string, quantity int) (*Bask
 
 // BasketRemove retire une quantité d'un SKU (par défaut : retire tout).
 func (c *Client) BasketRemove(ctx context.Context, sku string, quantity int) (*Basket, error) {
+	if err := c.ensureToken(ctx); err != nil {
+		return nil, err
+	}
 	scid, err := c.shoppingCartID(ctx)
 	if err != nil {
 		return nil, err

@@ -5,20 +5,15 @@ import (
 	"path/filepath"
 )
 
-// Valeurs par défaut découvertes par investigation de shop.lafourche.fr.
-// La boutique La Fourche est propulsée par Shopify (la-fourche.myshopify.com).
+// Valeurs par défaut découvertes par investigation du front lafourche.fr.
 const (
-	DefaultShopDomain = "shop.lafourche.fr"
-	DefaultAPIVersion = "2024-10"
+	// Recherche produits : index Algolia du site (mêmes résultats et prix membres).
+	// Clé « search-only » publique extraite du bootstrap du front.
+	DefaultAlgoliaAppID  = "SPM5J6SZTM"
+	DefaultAlgoliaAPIKey = "ca66381c136c56785ec5fb8e95a70ad7"
+	DefaultAlgoliaIndex  = "production_products"
 
-	// Token Storefront public extrait du bootstrap de la home Shopify.
-	// Il autorise les scopes "unauthenticated_*" (recherche produits, panier).
-	DefaultStorefrontToken = "23efc1617fa111fad36f7baab56a7725"
-
-	// Identifiant numérique de la boutique (utilisé par la Customer Account API).
-	ShopID = "995655740"
-
-	// Backend membre de La Fourche (≠ Shopify) : app Next.js + API GraphQL
+	// Backend membre de La Fourche : app Next.js + API GraphQL
 	// « lego », auth Firebase. Sert au login et aux commandes.
 	DefaultMemberAPIURL = "https://api.lafourche.fr/graphql"
 	DefaultLFChannel    = "default:fr_FR"
@@ -36,9 +31,10 @@ const (
 
 // Config regroupe les paramètres d'un Client. Tous surchargeables par env.
 type Config struct {
-	ShopDomain      string
-	APIVersion      string
-	StorefrontToken string
+	// Algolia (recherche produits).
+	AlgoliaAppID  string
+	AlgoliaAPIKey string
+	AlgoliaIndex  string
 	// SessionPath: fichier JSON où l'on persiste le panier et les jetons d'auth.
 	SessionPath string
 	// MemberAPIURL: endpoint GraphQL du backend membre (commandes, compte).
@@ -55,9 +51,9 @@ type Config struct {
 // en retombant sur les valeurs par défaut.
 func ConfigFromEnv() Config {
 	return Config{
-		ShopDomain:        envOr("LAFOURCHE_SHOP_DOMAIN", DefaultShopDomain),
-		APIVersion:        envOr("LAFOURCHE_API_VERSION", DefaultAPIVersion),
-		StorefrontToken:   envOr("LAFOURCHE_STOREFRONT_TOKEN", DefaultStorefrontToken),
+		AlgoliaAppID:      envOr("LAFOURCHE_ALGOLIA_APP_ID", DefaultAlgoliaAppID),
+		AlgoliaAPIKey:     envOr("LAFOURCHE_ALGOLIA_API_KEY", DefaultAlgoliaAPIKey),
+		AlgoliaIndex:      envOr("LAFOURCHE_ALGOLIA_INDEX", DefaultAlgoliaIndex),
 		SessionPath:       envOr("LAFOURCHE_SESSION_PATH", defaultSessionPath()),
 		MemberAPIURL:      envOr("LAFOURCHE_MEMBER_API_URL", DefaultMemberAPIURL),
 		LFChannel:         envOr("LAFOURCHE_LF_CHANNEL", DefaultLFChannel),

@@ -19,15 +19,16 @@ func JSON(v any) (string, error) {
 	return string(data), nil
 }
 
-// ProductsMarkdown rend une liste de produits dans un format adapté aux LLM.
-// L'identifiant de variant est mis en avant car requis par add_to_cart.
-func ProductsMarkdown(products []lafourche.Product) string {
-	if len(products) == 0 {
+// ProductsMarkdown rend une page de résultats dans un format adapté aux LLM.
+// Le SKU est mis en avant car requis par basket_add.
+func ProductsMarkdown(res *lafourche.SearchResult) string {
+	if res == nil || len(res.Products) == 0 {
 		return "Aucun produit trouvé."
 	}
 	var b strings.Builder
-	fmt.Fprintf(&b, "%d produit(s) trouvé(s) :\n", len(products))
-	for _, p := range products {
+	fmt.Fprintf(&b, "%d produit(s) (page %d/%d, %d au total) :\n",
+		len(res.Products), res.Page, res.Pages, res.Total)
+	for _, p := range res.Products {
 		for _, v := range p.Variants {
 			name := p.Title
 			if v.Title != "" && v.Title != "Default Title" {
@@ -42,11 +43,14 @@ func ProductsMarkdown(products []lafourche.Product) string {
 				fmt.Fprintf(&b, " (au lieu de %s %s)", price(v.CompareAt), v.Currency)
 			}
 			fmt.Fprintf(&b, "\n  - disponibilité : %s", dispo(v.Available))
-			fmt.Fprintf(&b, "\n  - variant_id : `%s`", v.VariantID)
+			fmt.Fprintf(&b, "\n  - sku : `%s`", v.SKU)
 			if p.URL != "" {
 				fmt.Fprintf(&b, "\n  - url : %s", p.URL)
 			}
 		}
+	}
+	if res.Page < res.Pages {
+		fmt.Fprintf(&b, "\n\nPage suivante : relancer avec page=%d.", res.Page+1)
 	}
 	return b.String()
 }

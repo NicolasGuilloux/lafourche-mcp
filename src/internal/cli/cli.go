@@ -189,31 +189,31 @@ func ordersCmd(newClient clientFactory, outFormat *string) *cobra.Command {
 // --- search ---
 
 func searchCmd(newClient clientFactory, outFormat *string) *cobra.Command {
-	var limit int
+	var page, size int
 	cmd := &cobra.Command{
 		Use:     "search <query>",
-		Short:   "Rechercher des produits",
+		Short:   "Rechercher des produits (50 par page)",
 		Args:    cobra.MinimumNArgs(1),
-		Example: "  lafourche search miel acacia\n  lafourche search --limit 5 chocolat",
+		Example: "  lafourche search miel acacia\n  lafourche search chocolat --page 2",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := newClient()
 			if err != nil {
 				return err
 			}
-			products, err := client.SearchProducts(cmd.Context(), strings.Join(args, " "), limit)
+			res, err := client.SearchProducts(cmd.Context(), strings.Join(args, " "), page, size)
 			if err != nil {
 				return err
 			}
 			if *outFormat == "json" {
-				return printJSON(products)
+				return printJSON(res)
 			}
-			if len(products) == 0 {
+			if len(res.Products) == 0 {
 				fmt.Println("Aucun produit trouvé.")
 				return nil
 			}
 			w := tabwriter.NewWriter(os.Stdout, 0, 2, 2, ' ', 0)
 			fmt.Fprintln(w, "PRIX\tDISPO\tPRODUIT\tSKU")
-			for _, p := range products {
+			for _, p := range res.Products {
 				for _, v := range p.Variants {
 					dispo := "✗"
 					if v.Available {
@@ -222,10 +222,17 @@ func searchCmd(newClient clientFactory, outFormat *string) *cobra.Command {
 					fmt.Fprintf(w, "%s %s\t%s\t%s\t%s\n", v.Price, v.Currency, dispo, p.Title, v.SKU)
 				}
 			}
-			return w.Flush()
+			w.Flush()
+			fmt.Printf("\nPage %d/%d — %d produit(s) au total", res.Page, res.Pages, res.Total)
+			if res.Page < res.Pages {
+				fmt.Printf(" (page suivante : --page %d)", res.Page+1)
+			}
+			fmt.Println()
+			return nil
 		},
 	}
-	cmd.Flags().IntVar(&limit, "limit", 10, "nombre max de résultats")
+	cmd.Flags().IntVar(&page, "page", 1, "numéro de page (1-indexée)")
+	cmd.Flags().IntVar(&size, "size", lafourche.DefaultSearchPageSize, "produits par page")
 	return cmd
 }
 

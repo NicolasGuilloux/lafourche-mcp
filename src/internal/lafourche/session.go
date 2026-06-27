@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// Session est l'état local persisté entre deux invocations: le panier Storefront
-// en cours et les jetons de la Customer Account API (auth/commandes).
+// Session est l'état local persisté entre deux invocations : l'id du panier du
+// compte et les jetons d'authentification Firebase.
 type Session struct {
 	// ShoppingCartID est l'id du panier du compte (doc Firestore carts/<id>),
 	// lu depuis customers/<uid>.shoppingCartId et mis en cache.

@@ -24,7 +24,7 @@ Firebase email/password login** — no browser anywhere. The basket is your
 | `login` | Log in with email/password (Firebase, no browser). |
 | `logout` | Log out and clear stored tokens. |
 | `info` | Show the logged-in account info. |
-| `search <query>` | Search the product catalog (prints each product's SKU). |
+| `search <query>` | Search the product catalog (50 results/page, `--page N`). |
 | `orders` | List your previous orders. |
 | `orders <number>` | Show one order with all its articles. |
 | `basket get` | Show the current account basket. |
@@ -42,7 +42,7 @@ When run as an MCP server (`mcp` / `mcp http`), the following tools are exposed:
 
 | Tool | Arguments | Description |
 | --- | --- | --- |
-| `search_products` | `query` (required), `limit` | Search the product catalog. Returns SKUs used by the basket. |
+| `search_products` | `query` (required), `page`, `size` | Search the product catalog (50/page). Returns SKUs used by the basket. |
 | `user_info` | — | Get the connected account info. Requires login. |
 | `basket_get` | — | Get current account basket contents. Requires login. |
 | `basket_add` | `sku` (required), `quantity` | Add a product to the basket by SKU. Requires login. |
@@ -134,7 +134,7 @@ Configured entirely through environment variables (see [`.env.example`](.env.exa
 | `LAFOURCHE_MEMBER_API_URL` | orders, basket | Member GraphQL API (default `https://api.lafourche.fr/graphql`). |
 | `LAFOURCHE_FIREBASE_PROJECT_ID` | basket | Firestore project (default `production-la-fourche`). |
 | `LAFOURCHE_FIREBASE_API_KEY` | login | Firebase Web API key (default: the front-end key). |
-| `LAFOURCHE_STOREFRONT_TOKEN` | search | Shopify Storefront token (default: public token). |
+| `LAFOURCHE_ALGOLIA_APP_ID` / `_API_KEY` / `_INDEX` | search | Algolia search config (defaults: the site's public values). |
 
 State (Firebase tokens + account cart id) lives in a single `session.json` in
 the config dir — `~/.config/lafourche` on Linux,
@@ -145,8 +145,9 @@ container (`XDG_CONFIG_HOME=/data`).
 
 La Fourche has two back-ends; this tool uses each for what it does best.
 
-- **Search** → the **Shopify Storefront API** of `shop.lafourche.fr` (public
-  token). It returns each product's **SKU**, which is the key used by the basket.
+- **Search** → the site's **Algolia** index (`production_products`) — the very
+  engine lafourche.fr uses. Same results, **member prices**, and each product's
+  **SKU** (the key used by the basket).
 
 - **Login, account, basket, orders** → the **member back-end**
   (`api.lafourche.fr` GraphQL + **Firebase/Firestore**):
